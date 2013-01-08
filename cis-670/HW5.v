@@ -154,6 +154,13 @@ But we're not, se here it is for convenience. *)
 Notation "[ ]" := nil.
 Notation "[ x ; .. ; y ]" := (cons x .. (cons y nil) ..).
 
+Inductive subsequence {T : Type} : list T -> list T -> Prop :=
+| subnil   : forall l, subsequence nil l
+| subdrop  : forall s y ry, subsequence s ry -> subsequence s (y :: ry)
+| submatch : forall x rx ry, subsequence rx ry -> subsequence (x :: rx) (x :: ry)
+.
+Hint Constructors subsequence.
+
 Definition sub123 := subsequence [1; 2; 3].
 Definition notsub123 := fun l => ~(subsequence [1; 2; 3] l).
 Hint Unfold sub123.
@@ -162,8 +169,15 @@ Example e1 : sub123 [1; 2; 3]. auto 100. Qed.
 Example e2 : sub123 [1; 1; 1; 2; 2; 3]. auto 100. Qed.
 Example e3 : sub123 [1; 2; 7; 3]. auto 100. Qed.
 Example e4 : sub123 [5; 6; 1; 9; 9; 2; 7; 3; 8]. auto 100. Qed.
-(* optional; you'll like inversion and unfold a lot
-Example e5 : notsub123 [1; 2]. (* TODO *) Qed.
-Example e6 : notsub123 [1; 3]. (* TODO *) Qed.
-Example e7 : notsub123 [5; 6; 2; 1; 7; 3; 8]. (* TODO *) Qed.
-*)
+(* optional; you'll like inversion and unfold a lot*)
+
+Ltac solvesubseq := intro;
+  repeat (
+    match goal with
+    | [H : subsequence _ _ |- False] => inversion H; clear H; crush
+    end
+  ).
+
+Example e5 : notsub123 [1; 2]. solvesubseq. Qed.
+Example e6 : notsub123 [1; 3]. solvesubseq. Qed.
+Example e7 : notsub123 [5; 6; 2; 1; 7; 3; 8]. solvesubseq. Qed.
